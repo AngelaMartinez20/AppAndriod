@@ -1,11 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:padding="24dp"
     android:gravity="center"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".ui.LoginActivity"
+    xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ID para binding.etEmail -->
     <EditText
         android:id="@+id/etEmail"
         android:hint="Correo electrónico"
@@ -13,6 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <!-- ID para binding.etPassword -->
     <EditText
         android:id="@+id/etPassword"
         android:hint="Contraseña"
@@ -20,17 +25,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <!--
+      ¡Este es el ID que faltaba!
+      ID para binding.btnLogin
+    -->
     <Button
         android:id="@+id/btnLogin"
         android:text="Iniciar sesión"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <!-- ID para binding.tvGoRegister -->
     <TextView
         android:id="@+id/tvGoRegister"
         android:text="¿No tienes cuenta? Regístrate aquí"
         android:textColor="@android:color/holo_blue_light"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"/>
 </LinearLayout>
-

@@ -36,7 +36,7 @@ class RegisterActivity : AppCompatActivity() {
                 "password" to password
             )
 
-            RetrofitClient.instance.register(userMap).enqueue(object : Callback<Map<String, String>> {
+            RetrofitClient.authInstance.register(userMap).enqueue(object : Callback<Map<String, String>> {
                 override fun onResponse(call: Call<Map<String, String>>, response: Response<Map<String, String>>) {
                     if (response.isSuccessful) {
                         Toast.makeText(applicationContext, "Registro exitoso", Toast.LENGTH_SHORT).show()
