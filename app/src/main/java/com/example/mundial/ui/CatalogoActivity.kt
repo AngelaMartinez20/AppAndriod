@@ -2,6 +2,7 @@ package com.example.mundial.ui
 
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem // <-- 1. ¡IMPORT FALTANTE!
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -12,7 +13,7 @@ import com.example.mundial.network.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import com.example.mundial.ui.CarritoAdapter // <-- ¡AÑADE ESTA LÍNEA!
+import com.example.mundial.ui.CatalogoAdapter // <-- 2. ¡IMPORT CORREGIDO!
 
 class CatalogoActivity : AppCompatActivity() {
 
@@ -25,19 +26,35 @@ class CatalogoActivity : AppCompatActivity() {
         binding = ActivityCatalogoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 1. Obtener el servicio de API (ya tiene el token)
+        // --- 3. ¡LÍNEA FALTANTE! ---
+        // Esto le dice a Android que muestre la flecha de "regresar"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        // Obtener el servicio de API (ya tiene el token)
         apiService = RetrofitClient.getApiService(applicationContext)
 
-        // 2. Configurar el RecyclerView y el Adapter
+        // Configurar el RecyclerView y el Adapter
         setupRecyclerView()
 
-        // 3. Llamar a la API para obtener los productos
+        // Llamar a la API para obtener los productos
         obtenerCatalogoDeProductos()
+
+        // Lógica para el botón flotante (¡Esta parte ya la tenías bien!)
+        binding.fabVerCarrito.setOnClickListener {
+            finish() // Cierra esta pantalla y regresa a MainActivity
+        }
+    }
+
+    // Esta función maneja el clic de la flecha de regreso
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            finish() // Cierra esta Activity y regresa a MainActivity
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun setupRecyclerView() {
-        // Inicializamos el adapter con una lista vacía
-        // Le pasamos la función lambda '::handleAgregarClick' como listener
         catalogoAdapter = CatalogoAdapter(emptyList(), ::handleAgregarClick)
 
         binding.rvCatalogo.apply {
@@ -52,7 +69,6 @@ class CatalogoActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val productos = response.body()?.data
                     if (productos != null && productos.isNotEmpty()) {
-                        // Actualizamos el adapter con la lista de productos
                         catalogoAdapter.updateProductos(productos)
                     } else {
                         Toast.makeText(this@CatalogoActivity, "No hay productos disponibles", Toast.LENGTH_SHORT).show()
@@ -70,22 +86,14 @@ class CatalogoActivity : AppCompatActivity() {
         })
     }
 
-    /**
-     * Esta función se llama cuando el Adapter detecta un clic en "Agregar"
-     */
     private fun handleAgregarClick(productoId: Int) {
         Log.d("CatalogoActivity", "Agregando producto ID: $productoId al carrito")
-
-        // Creamos el cuerpo de la petición: {"producto_id": X, "cantidad": 1}
         val requestBody = mapOf("producto_id" to productoId, "cantidad" to 1)
 
         apiService.agregarAlCarrito(requestBody).enqueue(object : Callback<Map<String, String>> {
             override fun onResponse(call: Call<Map<String, String>>, response: Response<Map<String, String>>) {
                 if (response.isSuccessful) {
                     Toast.makeText(this@CatalogoActivity, "✅ Producto agregado", Toast.LENGTH_SHORT).show()
-
-                    // Opcional: ¿Cerrar esta pantalla y volver al carrito?
-                    // finish()
                 } else {
                     Log.e("CatalogoActivity", "Error al agregar al carrito: ${response.code()}")
                     Toast.makeText(this@CatalogoActivity, "Error al agregar", Toast.LENGTH_SHORT).show()

@@ -4,14 +4,16 @@ package com.example.mundial.ui
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager // <-- Importante
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mundial.databinding.ActivityMainBinding
 import com.example.mundial.network.ApiService
 import com.example.mundial.network.CarritoResponse
 import com.example.mundial.network.RetrofitClient
-import com.example.mundial.ui.CatalogoActivity // <-- ¡AÑADE ESTA LÍNEA!
+import com.example.mundial.ui.CatalogoActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -20,13 +22,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var apiService: ApiService
-    private lateinit var carritoAdapter: CarritoAdapter // <-- Variable para el Adapter
+    private lateinit var carritoAdapter: CarritoAdapter
 
-    // --- ÚNICA FUNCIÓN onCreate ---
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Activa la nueva Toolbar
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val token = prefs.getString("jwt_token", null)
@@ -38,39 +43,40 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // --- 2. Si el token SÍ existe, continuar ---
-
-        // Configurar el RecyclerView (debe hacerse antes de llamar a la API)
-        setupRecyclerView()
-
-        // Configurar el ApiService
+        // 2. Si el token SÍ existe, continuar
+        setupRecyclerView() // <-- Esta es la llamada
         apiService = RetrofitClient.getApiService(applicationContext)
-
-        // Llamar a la red para obtener los datos del carrito
         obtenerMiCarrito()
 
         // Configurar el botón de logout
         binding.btnLogout.setOnClickListener {
             prefs.edit().remove("jwt_token").apply()
-            startActivity(Intent(this, LoginActivity::class.java))
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
             finish()
         }
 
-        // --- AÑADE ESTA LÓGICA PARA EL BOTÓN (DENTRO DEL ONCREATE) ---
+        // Configurar el botón de ir al Catálogo
         binding.fabAgregarProductos.setOnClickListener {
             val intent = Intent(this, CatalogoActivity::class.java)
             startActivity(intent)
         }
-        // -----------------------------------------------------------
+
+        // Lógica del botón Comprar
+        binding.btnComprar.setOnClickListener {
+            Toast.makeText(this, "Iniciando proceso de pago...", Toast.LENGTH_SHORT).show()
+        }
     }
     // --- AQUÍ TERMINA EL onCREATE ---
 
 
     /**
+     * ¡ESTA ES LA FUNCIÓN QUE FALTABA!
      * Función para configurar el RecyclerView y el Adapter
      */
     private fun setupRecyclerView() {
-        carritoAdapter = CarritoAdapter(emptyList()) // Inicializa con lista vacía
+        carritoAdapter = CarritoAdapter(emptyList())
         binding.rvCarrito.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = carritoAdapter
@@ -89,12 +95,14 @@ class MainActivity : AppCompatActivity() {
                     val carrito = response.body()
                     Log.d("MainActivity", "Carrito obtenido: ${carrito?.items?.size} items")
 
-                    // --- Actualiza el adapter con los datos ---
                     if (carrito != null && carrito.items.isNotEmpty()) {
                         carritoAdapter.updateItems(carrito.items)
+                        binding.tvTotal.text = "Total: $${carrito.total}"
+                        binding.bottomBar.visibility = View.VISIBLE
+
                     } else {
-                        // Si el carrito está vacío, limpia la lista
                         carritoAdapter.updateItems(emptyList())
+                        binding.bottomBar.visibility = View.GONE
                         Toast.makeText(this@MainActivity, "Tu carrito está vacío", Toast.LENGTH_SHORT).show()
                     }
 
@@ -111,7 +119,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<CarritoResponse>, t: Throwable) {
-                // Manejar error de red
                 Log.e("MainActivity", "Fallo de red", t)
                 Toast.makeText(this@MainActivity, "Fallo de red: ${t.message}", Toast.LENGTH_SHORT).show()
             }
